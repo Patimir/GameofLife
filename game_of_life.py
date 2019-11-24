@@ -1,13 +1,16 @@
 import pygame
 import random
+import copy
 import sys
+
+from pprint import pprint
 
 class LifeGame:
 	BLACK = 0, 0, 0
 	CYAN = 0, 255, 255
 	RED = 255, 0, 0
 
-	def __init__(self, screen_width=800, screen_height=600, cell_size=10, shape='circle'):
+	def __init__(self, screen_width=800, screen_height=600, cell_size=10, shape='square'):
 		'''
 		Initialize the grid, set default game state, initialize screen
 
@@ -31,16 +34,16 @@ class LifeGame:
 		self.init_grids()
 		self.set_grid()
 
+		self.tmp = [x[:] for x in [[0] * self.num_cols] * self.num_rows]
 
 	def init_grids(self):
 		'''
-		Initialize active and inactive grid
-		Initial grid is a simple python 2D list filled with 0's 
+		Initialize grid -> create 2D list filled with 0's 
 
 		:return: None
 		'''
-		self.active_grid = [x[:] for x in [[0] * self.num_cols] * self.num_rows]
-		self.inactive_grid = [x[:] for x in [[0] * self.num_cols] * self.num_rows]
+		self.grid = [x[:] for x in [[0] * self.num_cols] * self.num_rows]
+
 
 
 	def set_grid(self, value=None):
@@ -61,7 +64,7 @@ class LifeGame:
 					cell_value = random.choice([0, 1])
 				else:
 					cell_value = value
-				self.active_grid[row][col] = cell_value
+				self.grid[row][col] = cell_value
 
 
 	def draw_grid(self):
@@ -73,24 +76,24 @@ class LifeGame:
 		self.clear_screen()
 		for row in range(self.num_rows):
 			for col in range(self.num_cols):
-				if self.active_grid[row][col] == 1:
+				if self.grid[row][col] == 1:
 					colour = self.RED
 				else:
 					colour = self.BLACK
 
-				if self.shape == None or self.shape == 'square':
+				if self.shape == 'square':
 					pygame.draw.rect(self.screen, colour, 
-								    (col * self.cell_size, row * self.cell_size, self.cell_size, self.cell_size))
-				elif self.shape == 'circle':
+						(col * self.cell_size, row * self.cell_size, self.cell_size, self.cell_size))
+				if self.shape == 'circle':
 					pygame.draw.circle(self.screen, colour, 
-								      (col * self.cell_size + self.cell_size//2, row * self.cell_size + self.cell_size//2), 
-								      self.cell_size//2)
+						(col * self.cell_size + self.cell_size//2, row * self.cell_size + self.cell_size//2), 
+						self.cell_size//2)
 		pygame.display.flip()
 
 
 	def clear_screen(self):
 		'''
-		Fill the whole screen with black color (clear the screen)
+		Fill the whole screen with black colour (clear the screen)
 
 		:return: None
 		'''
@@ -106,25 +109,24 @@ class LifeGame:
 		:return: int: number of live cells 
 		'''
 		count = 0
-		if (row > 0 and self.active_grid[row - 1][col] == 1): 
+		if (row > 0 and self.grid[row - 1][col] == 1): 
 			count += 1
-		if (col > 0 and self.active_grid[row][col - 1] == 1): 
+		if (col > 0 and self.grid[row][col - 1] == 1): 
 			count += 1
-		if (row > 0 and col > 0 and 
-			self.active_grid[row - 1][col - 1] == 1): 
+		if (row > 0 and col > 0 and self.grid[row - 1][col - 1] == 1): 
 			count += 1
-		if (row < self.num_rows - 1 and self.active_grid[row + 1][col] == 1): 
+		if (row < self.num_rows - 1 and self.grid[row + 1][col] == 1): 
 			count += 1
-		if (col < self.num_cols - 1 and self.active_grid[row][col + 1] == 1): 
+		if (col < self.num_cols - 1 and self.grid[row][col + 1] == 1): 
 			count += 1
 		if (row < self.num_rows - 1 and col < self.num_cols - 1
-			and self.active_grid[row + 1][col + 1] == 1): 
+			and self.grid[row + 1][col + 1] == 1): 
 			count += 1
 		if (row < self.num_rows - 1 and col > 0
-			and self.active_grid[row + 1][col - 1] == 1): 
+			and self.grid[row + 1][col - 1] == 1): 
 			count += 1
 		if (row > 0 and col < self.num_cols - 1
-			and self.active_grid[row - 1][col + 1] == 1): 
+			and self.grid[row - 1][col + 1] == 1): 
 			count += 1
 
 		return count
@@ -140,14 +142,14 @@ class LifeGame:
 		:return: True or False
 		'''
 		num_alive_neighbors = self.count_live_neighbors(row, col)
-		if self.active_grid[row][col] == 1: # Alive cell
+		if self.grid[row][col] == 1: # Alive cell
 			if num_alive_neighbors < 2: # Underpopulation
 				return False
 			if num_alive_neighbors > 3: # Overpopulation
 				return False
 			if num_alive_neighbors == 2 or num_alive_neighbors == 3: # Survives
 				return True
-		if self.active_grid[row][col] == 0: # Dead cell
+		if self.grid[row][col] == 0: # Dead cell
 			if num_alive_neighbors == 3: # Reproduction
 				return True
 			else:
@@ -158,17 +160,18 @@ class LifeGame:
 		'''
 		Inspect the current generation, update inactive grid and swap out the grids
 		
-		:return: updated active_grid
+		:return: updated grid
 		'''
+		tmp_grid = [x[:] for x in [[0] * self.num_cols] * self.num_rows]
 		for row in range(self.num_rows):
 			for col in range(self.num_cols):
 				if self.check_cell_neighbours(row, col):
-					self.inactive_grid[row][col] = 1
+					tmp_grid[row][col] = 1
 				else:
-					self.inactive_grid[row][col] = 0
+					tmp_grid[row][col] = 0
 
-		self.active_grid = self.inactive_grid
-		return self.active_grid
+		self.grid = tmp_grid
+		return self.grid
 
 
 	def handle_events(self):
@@ -194,6 +197,8 @@ class LifeGame:
 					self.set_grid(1)
 				if event.key == pygame.K_0:
 					self.set_grid(0)
+				if event.key == pygame.K_p:
+					pass
 				if event.key == pygame.K_s or event.key == pygame.K_SPACE:
 					if self.pause:
 						self.pause = False
@@ -215,6 +220,5 @@ class LifeGame:
 			if self.pause:
 				self.draw_grid()
 				continue
-
 			self.update_generation()
 			self.draw_grid()

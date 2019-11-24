@@ -9,13 +9,13 @@ Python implementation of Conway's Game of Life using pygame.
 
 ## Running
 
-Run via lunch script installed with pip package
+Run via console using python
 
 `python main.py`
 
 ## Using inside of code
 
-To import the  class in to your own code:
+To import the class in to your own code:
 
 `from game_of_life import LifeGame`
 
