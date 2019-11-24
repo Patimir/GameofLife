@@ -23,8 +23,8 @@ To import the class in to your own code:
 
 Key binds available:
 
-- q - Quit
-- s - Start/Stop 
-- r - Randomize Game
-- 1 - Fill the screen with live cells
-- 0 - Fill the screen with dead cells
+- q: Quit
+- s: Start/Stop 
+- r: Randomize Game
+- 0: Clear the screen
+- 1-9: Spawn different patterns 

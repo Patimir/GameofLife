@@ -1,16 +1,48 @@
 import pygame
 import random
-import copy
 import sys
 
-from pprint import pprint
+# PATTERNS
+BLINKER = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
+TOAD = [[0, 0, 0, 0], [0, 1, 1, 1], [1, 1, 1, 0], [0, 0, 0, 0]]
+BEACON = [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 1, 1], [0, 0, 1, 1]]
+PULSAR = [[0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0], 
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1], 
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1], 
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1], 
+		[0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1], 
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1], 
+		[1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1],
+		[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+		[0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0]]
+PENTA = [[0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+		[1, 1, 0, 1, 1, 1, 1, 0, 1, 1], 
+		[0, 0, 1, 0, 0, 0, 0, 1, 0, 0]]
+GLIDER = [[0, 0, 1], [1, 0, 1], [0, 1, 1]]
+LW_SHIP = [[1, 0, 0, 1, 0], [0, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1]]
+MW_SHIP = [[0, 0, 0, 1, 0, 0], [0, 1, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 0]]
+GLIDER_GUN = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+			[1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+
 
 class LifeGame:
 	BLACK = 0, 0, 0
 	CYAN = 0, 255, 255
 	RED = 255, 0, 0
 
-	def __init__(self, screen_width=800, screen_height=600, cell_size=10, shape='square'):
+	def __init__(self, screen_width=800, screen_height=600, cell_size=6, shape='circle'):
 		'''
 		Initialize the grid, set default game state, initialize screen
 
@@ -51,20 +83,32 @@ class LifeGame:
 		Set grid values to (0 or 1) If value == None randomize the grid
 
 		Example:
-			set_grid(0) -> all dead
-			set_grid(1) -> all alive
 			set_grid(), set_grid(None) -> random
+			set_grid(0) -> clear the screen
 
-		:param value: set the cell value to (0 or 1)
+		:param value: set the cell to value (0 or 1)
 		:return: None
 		'''
 		for row in range(self.num_rows):
 			for col in range(self.num_cols):
 				if value is None:
-					cell_value = random.choice([0, 1])
-				else:
-					cell_value = value
-				self.grid[row][col] = cell_value
+					self.grid[row][col] = random.choice([0, 1])
+				elif value == 0:
+					self.grid[row][col] = 0
+
+
+	def spawn_pattern(self, pattern):
+		'''
+		Adds a pattern to the grid based on user input
+
+		:param pattern: type of pattern
+		:return: None
+		'''
+		random_row = random.randint(0, self.num_rows-len(pattern))
+		random_col = random.randint(0, self.num_cols-len(pattern[0]))
+		for row in range(len(pattern)):
+			for col in range(len(pattern[0])):
+				self.grid[row+random_row][col+random_col] = pattern[row][col]
 
 
 	def draw_grid(self):
@@ -180,8 +224,8 @@ class LifeGame:
 		s / space -> start/stop
 		r 		  -> randomize grid
 		q / esc   -> quit the game
-		1 		  -> fill the screen with live cells only
 		0 		  -> fill the screen with dead cells only
+		1-9		  -> spawn different patterns 
 
 		:return: None
 		'''
@@ -193,12 +237,26 @@ class LifeGame:
 					sys.exit()
 				if event.key == pygame.K_r:
 					self.set_grid(None)
-				if event.key == pygame.K_1:
-					self.set_grid(1)
 				if event.key == pygame.K_0:
 					self.set_grid(0)
-				if event.key == pygame.K_p:
-					pass
+				if event.key == pygame.K_1:
+					self.spawn_pattern(BLINKER)
+				if event.key == pygame.K_2:
+					self.spawn_pattern(TOAD)
+				if event.key == pygame.K_3:
+					self.spawn_pattern(BEACON)
+				if event.key == pygame.K_4:
+					self.spawn_pattern(PULSAR)
+				if event.key == pygame.K_5:
+					self.spawn_pattern(PENTA)
+				if event.key == pygame.K_6:
+					self.spawn_pattern(GLIDER)
+				if event.key == pygame.K_7:
+					self.spawn_pattern(LW_SHIP)
+				if event.key == pygame.K_8:
+					self.spawn_pattern(MW_SHIP)
+				if event.key == pygame.K_9:
+					self.spawn_pattern(GLIDER_GUN)					
 				if event.key == pygame.K_s or event.key == pygame.K_SPACE:
 					if self.pause:
 						self.pause = False
@@ -220,5 +278,5 @@ class LifeGame:
 			if self.pause:
 				self.draw_grid()
 				continue
-			self.update_generation()
 			self.draw_grid()
+			self.update_generation()
